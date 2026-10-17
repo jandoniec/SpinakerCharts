@@ -1,0 +1,59 @@
+{
+  "name": "spinakercharts",
+  "version": "0.6.2",
+  "description": "Interactive JavaScript chart library with sailing telemetry, UTC time support and PNG export.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./time": {
+      "types": "./src/time.d.ts",
+      "import": "./src/time.js"
+    },
+    "./sailing": {
+      "types": "./src/sailing.d.ts",
+      "import": "./src/sailing.js"
+    },
+    "./themes": {
+      "types": "./src/themes.d.ts",
+      "import": "./src/themes.js"
+    },
+    "./replay": {
+      "types": "./src/replay.d.ts",
+      "import": "./src/replay.js"
+    },
+    "./export": {
+      "import": "./src/export.js"
+    },
+    "./composite": {
+      "types": "./src/composite.d.ts",
+      "import": "./src/composite.js"
+    },
+    "./studio": {
+      "types": "./src/studio.d.ts",
+      "import": "./src/studio.js"
+    },
+    "./sailing-advanced": {
+      "types": "./src/sailing-advanced.d.ts",
+      "import": "./src/sailing-advanced.js"
+    }
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "demo": "python3 -m http.server 8080"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  }
+}

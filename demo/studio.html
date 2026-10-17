@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SpinakerCharts | Telemetry</title><style>
+*{box-sizing:border-box}body{margin:0;background:#08111d;color:#f1f6ff;font:14px Inter,system-ui,sans-serif}header,main{max-width:1240px;margin:auto;padding:24px}header{padding-top:36px}h1{font-size:clamp(32px,5vw,60px);letter-spacing:-2px;margin:7px 0 10px}h1 span{color:#58e0d0}p{color:#99aec8;line-height:1.6}.eyebrow{letter-spacing:2px;font-size:11px;color:#58e0d0}.tools{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:18px 0}button,select,input{background:#182a41;color:#edf6ff;border:1px solid #324a62;padding:9px 14px;border-radius:9px}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #58e0d0}.panel{background:#101b2d;border:1px solid #293a50;border-radius:18px;padding:15px;margin:0 0 20px}main{padding-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.kpi{background:#142338;border-radius:12px;padding:14px}.kpi small{color:#8da4bd;font-size:10px;letter-spacing:1px}.kpi strong{font-size:24px;display:block;margin:8px 0 0}.help{font-size:12px;color:#98b0cc}.chart{min-height:260px}.tools{background:#111e30;border:1px solid #2c4059;border-radius:16px;padding:14px 17px;margin:10px 0 20px}.tools label{display:flex;align-items:center;gap:8px;color:#91a8c2;font-size:12px}.tools button{background:#21344b;transition:background .15s}.tools button:hover{background:#30506a}.charthead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.charthead strong{font-size:12px;color:#a0b6d0;text-transform:uppercase;letter-spacing:.8px}.export{background:#1b3545;border:1px solid #2f5d62;color:#7de9d8;padding:7px 12px;cursor:pointer;font-size:12px}.export:hover{background:#254c5b}.stat{font-size:12px;color:#7de9d8}#replay{margin-bottom:20px}.tip{text-align:right;font-size:11px;color:#7a91ae}.chart{min-height:260px}#polar{min-height:420px}footer{max-width:1240px;margin:auto;padding:5px 24px 40px;color:#809bb6}@media(max-width:760px){.grid,.kpis{grid-template-columns:1fr 1fr}}@media(max-width:470px){.grid{grid-template-columns:1fr}}
+
+
+</style></head><body>
+<main><div id="replay"></div><div class="tools"><button id="reset">Reset zoom</button><button id="exportAll">Download PNG</button><span id="notice" class="stat" role="status"></span></div>
+<div class="kpis"><div class="kpi"><small>SESSION TIME (UTC)</small><strong id="clock">--:--:--</strong></div><div class="kpi"><small>SOG</small><strong id="sog">-- kn</strong></div><div class="kpi"><small>VMG</small><strong id="vmg">-- kn</strong></div><div class="kpi"><small>TARGET</small><strong id="target">--%</strong></div></div>
+<div class="panel"><div class="charthead"><strong>Boat speed telemetry</strong><button class="export" data-chart="speed" aria-label="Download speed chart as PNG">Download PNG</button></div><div id="speedchart" class="chart"></div></div><div class="grid"><div class="panel"><div class="charthead"><strong>Wind and VMG</strong><button class="export" data-chart="wind" aria-label="Download wind chart as PNG">Download PNG</button></div><div id="windchart" class="chart"></div></div><div class="panel"><div class="charthead"><strong>Polar comparison</strong><button class="export" data-chart="polar" aria-label="Download polar comparison as PNG">Download PNG</button></div><div id="polarchart"></div></div></div><div class="grid"><div class="panel"><div class="charthead"><strong>True wind rose</strong><button class="export" data-chart="windrose">Download PNG</button></div><div id="windrosechart"></div></div><div class="panel"><div class="charthead"><strong>VMG polar curve</strong><button class="export" data-chart="vmgcurve">Download PNG</button></div><div id="vmgchart"></div></div></div><div class="panel"><div class="charthead"><strong>Heel versus speed</strong><button class="export" data-chart="heel">Download PNG</button></div><div id="heelchart"></div></div><p id="segment" class="help"></p></main>
+<script type="module">
+import {createTelemetryController,createTelemetryChart,createPolarComparison,polarPerformance} from '../src/studio.js';
+import {createReplayBar} from '../src/replay.js';
+import {downloadDashboardPNG} from '../src/composite.js';
+import {createSailingChart} from '../src/sailing-advanced.js';
+
+// Przykładowe polary: tylko na potrzeby demonstracji. W produkcie podstawiamy
+// certyfikowane lub zmierzone dane odpowiednie dla analizowanego jachtu.
+const angles=[0,20,30,40,50,60,75,90,110,130,150,170,180];
+const speeds=angles.map(a=>a<30?0:2+6.3*Math.sin(a*Math.PI/210)**.7);
+const reference=[8,12,16,20].flatMap(tws=>angles.map((twa,i)=>({tws,twa,speed:speeds[i]*(.7+(tws-8)*.045)})));
+const challenger=reference.map(p=>({...p,speed:p.speed*(.95+.055*Math.cos(p.twa*Math.PI/90))}));
+const start=Date.UTC(2026,9,16,11,0,0);
+const data=Array.from({length:480},(_,i)=>{const twa=44+22*Math.sin(i*.043),tws=12+3.7*Math.sin(i*.017),stw=5.4+1.15*Math.sin(i*.043+.2)+.33*Math.cos(i*.28),sog=stw+.16*Math.sin(i*.31),vmg=stw*Math.cos(twa*Math.PI/180);return{timestamp:start+i*1000,twa,tws,twd:(285+32*Math.sin(i*.02)+360)%360,heel:8+9*Math.abs(Math.sin(i*.067)),stw,sog,vmg};});
+const measured=polarPerformance(data,reference);
+const controller=createTelemetryController(measured,{speed:100});
+const replay=createReplayBar('#replay',{controller,accent:'#58e0d0',stepSeconds:15,title:'Session'});
+const speedChart=createTelemetryChart('#speedchart',{controller,title:'Boat speed | knots',fields:[{key:'sog',label:'SOG'},{key:'stw',label:'STW',color:'#89a8ff'}],onRangeSelected:range=>document.querySelector('#segment').textContent=`Selected: ${new Date(range[0]).toISOString()} to ${new Date(range[1]).toISOString()}`});
+const windChart=createTelemetryChart('#windchart',{controller,title:'Wind and velocity made good',fields:[{key:'tws',label:'TWS',color:'#ffbf7a'},{key:'vmg',label:'VMG',color:'#58e0d0'}]});
+const polarChart=createPolarComparison('#polarchart',{boats:[{name:'Reference',data:reference},{name:'Comparison',data:challenger,color:'#ffbf7a'}],tws:12});
+controller.subscribe(state=>{const r=state.sample;if(!r)return;document.querySelector('#clock').textContent=new Date(r.timestamp).toISOString().slice(11,19);document.querySelector('#sog').textContent=r.sog.toFixed(2)+' kn';document.querySelector('#vmg').textContent=r.vmg.toFixed(2)+' kn';document.querySelector('#target').textContent=(r.performancePercent?.toFixed(1)??'N/A')+'%';});
+// Wszystkie wykresy używają wspólnego zakresu powiększenia kontrolera.
+// Poniższe przyciski korzystają z eksportu pojedynczego elementu SVG,
+// przez co pobierane PNG nie zawierają pozostałych paneli strony.
+// Dodatkowe wykresy dla żeglarstwa: wejście to niezależne rekordy telemetrii.
+const windRose=createSailingChart('#windrosechart',{type:'windRose',data:measured,title:'Wind direction frequency'});
+const vmgCurve=createSailingChart('#vmgchart',{type:'vmgCurve',polar:reference,tws:12,title:'VMG / TWA'});
+const heelChart=createSailingChart('#heelchart',{type:'heelScatter',data:measured,xKey:'heel',yKey:'stw',title:'Heel angle vs STW'});
+const charts={speed:speedChart,wind:windChart,polar:polarChart,windrose:windRose,vmgcurve:vmgCurve,heel:heelChart};
+const $=id=>document.getElementById(id);
+// Wszystkie ustawienia wyglądu są wyłącznie w kodzie (bez ekranowego edytora).
+const STYLE={background:'#0c1728',grid:'#2b3e56',strokeWidth:2.8,radius:14};
+$('exportAll').onclick=async()=>{
+  const button=$('exportAll');try{button.disabled=true;
+    await downloadDashboardPNG(Object.values(charts),'spinaker-dashboard.png',{
+      title:'Telemetry',columns:2,scale:2});
+    $('notice').textContent='Dashboard export requested';
+  }catch(error){$('notice').textContent=`Export failed: ${error.message}`;}
+  finally{button.disabled=false;}
+};
+document.querySelectorAll('[data-chart]').forEach(button=>button.addEventListener('click',async()=>{
+ const name=button.dataset.chart,original=button.textContent;
+ try {button.disabled=true;button.textContent='Exporting...';await charts[name].downloadPNG(`spinaker-${name}.png`,{scale:2});button.textContent='Saved';}
+ catch(error){console.error(error);document.querySelector('#notice').textContent=`Export failed: ${error.message}`;button.textContent='Retry export';}
+ finally{button.disabled=false;setTimeout(()=>{button.textContent=original},1400);}
+}));
+$('reset').onclick=()=>controller.resetViewRange();
+// W demo brak publicznych kontrolek theme/style. Programista konfiguruje je
+// parametrami createTelemetryChart() i createPolarComparison().
+</script></body></html>

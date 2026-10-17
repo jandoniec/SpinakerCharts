@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SpinakerCharts | Charts</title><style>
+*{box-sizing:border-box}body{margin:0;background:#09111e;color:#f4f8ff;font:15px system-ui,sans-serif}header{padding:45px 5%;background:radial-gradient(ellipse at top right,#174553,#09111e 65%);border-bottom:1px solid #294158}.tag{letter-spacing:3px;font-size:11px;color:#59ded0}h1{font-size:clamp(40px,6vw,74px);letter-spacing:-2px;margin:12px 0}h1 em{color:#59ded0;font-style:normal}p{color:#9bb1c9;max-width:600px;line-height:1.6}.toolbar{display:flex;justify-content:space-between;align-items:center;max-width:1300px;margin:25px auto 0;padding:0 20px;gap:12px}button{background:#1b3048;color:#fff;border:1px solid #405775;border-radius:8px;padding:10px 15px;cursor:pointer}button:hover{border-color:#59ded0}main{max-width:1320px;margin:auto;padding:24px 20px 70px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}article{background:#101a2b;border:1px solid #2b4158;border-radius:15px;padding:14px;min-width:0;box-shadow:0 12px 30px #0002}article h2{font-size:14px;font-weight:600;margin:4px 9px 12px}article small{font-size:10px;color:#8ca6c2;float:right;text-transform:uppercase;letter-spacing:1px}.note{font-size:11px;color:#91a4bb;text-align:center;margin:0 0 30px}@media(max-width:750px){main{grid-template-columns:1fr}header{padding:30px 20px}}
+</style></head><body><main id="gallery"></main>
+<script type="module">
+import {createChart,chartTypes} from '../src/index.js';
+const telemetry=Array.from({length:28},(_,i)=>({time:`${i}:00`,speed:6.6+1.4*Math.sin(i*.4)+.3*Math.sin(i*1.9),vmg:4.7+1.2*Math.sin(i*.35+.3),size:i%6+2}));
+const week=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((day,i)=>({day,speed:3+Math.sin(i*1.5)*2+3,vmg:3+Math.cos(i*.6)*1.5+2}));
+const radial=Array.from({length:12},(_,i)=>({angle:`${i*30}°`,speed:2+6*Math.sin(i*Math.PI/12)**2}));
+const categories=[{name:'Upwind',value:35},{name:'Reach',value:24},{name:'Downwind',value:41}];
+const heat=['6 kn','9 kn','12 kn','15 kn'].flatMap((tws,i)=>['40°','60°','90°','120°','150°'].map((twa,j)=>({tws,twa,efficiency:45+j*7+i*6+Math.sin(i+j)*8})));
+const candle=Array.from({length:15},(_,i)=>{const open=85+i*.9+Math.sin(i)*4,close=open+Math.cos(i*2)*5;return{period:`T${i+1}`,open,close,low:Math.min(open,close)-3,high:Math.max(open,close)+3};});
+function setup(type){
+ if(['line','area','spline','step','scatter','bubble'].includes(type))return {data:telemetry,x:'time',y:'speed',size:'size'};
+ if(['bar','horizontalBar','stackedBar','histogram'].includes(type))return {data:week,x:'day',y:'speed',series:type==='bar'||type==='stackedBar'?[{key:'speed',name:'Speed'},{key:'vmg',name:'VMG'}]:undefined};
+ if(type==='waterfall')return {data:[{name:'Start',value:4},{name:'Gain',value:3},{name:'Loss',value:-1},{name:'Trim',value:2},{name:'Drop',value:-2}],x:'name',y:'value'};
+ if(type==='candlestick')return {data:candle,x:'period'};
+ if(['pie','donut','gauge','treemap'].includes(type))return {data:categories,x:'name',y:'value'};
+ if(['polar','radar','radialBar'].includes(type))return {data:radial,x:'angle',y:'speed'};
+ if(type==='heatmap')return {data:heat,x:'tws',y:'twa',value:'efficiency'};
+}
+const gallery=document.querySelector('#gallery');const charts=chartTypes.map(type=>{const box=document.createElement('article');const title=document.createElement('h2');title.textContent=type;box.appendChild(title);const plot=document.createElement('div');box.appendChild(plot);gallery.appendChild(box);return createChart(plot,{type,theme:'midnight',height:280,...setup(type)});});
+</script></body></html>
