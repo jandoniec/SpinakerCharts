@@ -38,4 +38,4 @@ Run `npm test`.
 
 ## License
 
-See `LICENSE`. The code is currently not licensed for redistribution or sublicensing. Choose a license before inviting contributions or permitting reuse.
+Licensed under the MIT License. See [LICENSE](LICENSE).

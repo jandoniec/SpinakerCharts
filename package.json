@@ -52,7 +52,7 @@
     "test": "node --test",
     "demo": "python3 -m http.server 8080"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": ">=18"
   }
